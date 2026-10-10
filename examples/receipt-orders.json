@@ -1,0 +1,41 @@
+{
+  "message": "success",
+  "data": {
+    "list": [
+      {
+        "createTime": "2026-10-08 08:42:00",
+        "orderStatus": "6",
+        "storeName": "麦当劳 · 晨光路餐厅（虚构）",
+        "realTotalAmount": "18.50",
+        "orderProductList": [
+          {"productName": "猪柳蛋麦满分", "quantity": 1},
+          {"productName": "鲜煮咖啡", "quantity": 1}
+        ]
+      },
+      {
+        "createTime": "2026-10-09 12:30:00",
+        "orderStatus": "8",
+        "storeName": "麦当劳 · 晨光路餐厅（虚构）",
+        "realTotalAmount": "27.90",
+        "orderProductList": [
+          {"productName": "板烧鸡腿堡", "quantity": 1},
+          {"productName": "中薯条", "quantity": 1},
+          {"productName": "可口可乐", "quantity": 1}
+        ]
+      },
+      {
+        "createTime": "2026-10-10 11:30:00",
+        "orderStatus": "7",
+        "storeName": "麦当劳 · 河畔餐厅（虚构）",
+        "realTotalAmount": "22.00",
+        "orderProductList": [{"productName": "巨无霸", "quantity": 1}]
+      },
+      {
+        "createTime": "2026-10-07 18:00:00",
+        "orderStatus": "6",
+        "storeName": "不应出现在寒露收据中的上期订单",
+        "realTotalAmount": "99.00"
+      }
+    ]
+  }
+}
