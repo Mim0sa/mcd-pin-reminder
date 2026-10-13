@@ -1,14 +1,14 @@
 # 麦麦节气徽章查询
 
-喜欢收集麦当劳节气徽章，却想不起来这期有没有吃过麦麦？问一句「我的寒露徽章拿到了吗」，这个 Skill 会查询你的近期订单，生成一张消费小票，并按成功订单推定徽章状态。
+问一句「我的寒露徽章拿到了吗」，通过麦当劳官方 MCP 查询近期订单，推定节气徽章状态，并生成一张消费小票。
 
-面向节气徽章收藏用户。支持当前、上一个或更早的节气，内置 **2026、2027 年**日期。它只有这一个查询功能，不定时提醒，也不自动下单。
+支持当前和历史节气，内置 **2026、2027 年**节气日期。
 
-> 徽章按订单推定，以官方实际发放为准。项目不查询官方徽章墙；节气当天北京时间 0 点是本项目的区间规则，并非经官方确认的徽章发放时间。
+> 徽章状态按成功订单推定，以官方实际发放为准。
 
 ## 快速开始
 
-需要 **Python 3.10+** 和可执行本地脚本的 Skill 客户端。脚本仅使用 Python 标准库，运行时需要系统提供 `Asia/Shanghai` 时区数据。
+需要 **Python 3.10+**，无第三方依赖；系统需支持 `Asia/Shanghai` 时区。
 
 ```bash
 git clone https://github.com/Mim0sa/mcd-pin-reminder.git
@@ -16,67 +16,41 @@ cd mcd-pin-reminder
 cp .env.example .env
 ```
 
-从[麦当劳 MCP 平台](https://open.mcd.cn/mcp)申请个人 Token，在本地 `.env` 中填写：
+从[麦当劳 MCP 平台](https://open.mcd.cn/mcp)申请个人 Token，填入本地 `.env`：
 
 ```dotenv
 MCD_MCP_TOKEN=你的个人Token
 ```
 
-运行真实账户查询：
-
 ```bash
 python3 scripts/check_pin.py --markdown
 ```
 
-也可以设置进程环境变量 `MCD_MCP_TOKEN`；环境变量优先。脚本直接连接官方 MCP，**不需要额外配置宿主 MCP 连接器**。`.env` 已加入 `.gitignore`，不要将它复制进公开发布包。
+脚本直接连接官方 MCP，无需额外配置连接器。也可使用同名环境变量，优先于 `.env`；请勿提交或分享 Token。
 
-## 在对话中使用
+## 使用方式
 
-将项目目录安装到客户端的技能目录，保留 `SKILL.md`、`scripts/`、`references/`，在安装后的目录配置自己的 `.env`。各客户端技能安装方法不同，按客户端的说明操作；宿主需要能运行 Python 脚本。
+**对话查询**：将项目放入支持本地 Python 脚本的客户端技能目录，保留 `SKILL.md`、`scripts/`、`references/`，并在该目录配置 `.env`。随后可以问：
 
-| 你说 | Skill 查询 |
-| --- | --- |
-| 「我现在拿到节气徽章了吗？」 | 当前节气 |
-| 「查询上个节气」 | 从当前节气往前 1 个 |
-| 接着说「再上一个」 | 从当前节气往前 2 个，后续依次递增 |
+- 「我现在拿到节气徽章了吗？」
+- 「查询上个节气」
+- 「再上一个」
 
-输出为 `text` 代码块中的收据：顶部居中的 M 图案、节气区间、最近最多五笔订单、成功消费合计和徽章结论。明细包括下单时间、门店、餐品数量、状态与金额。开放右边缘排版避免中英文混排时右边框错位；长名称换行，不截断餐品。
-
-结论文案：
-
-- 有成功订单：「秋分节气内有成功订单，已经获得该徽章！」
-- 未查到成功订单：「未查询到成功订单，快去吃一顿麦麦吧！」
-- 查询失败或证据不足：「暂时无法判断徽章状态。」
-
-## 命令行与演示
-
-以下命令在项目目录执行；从其他目录使用时，将脚本路径替换为安装位置的绝对路径。
+**命令行查询**：
 
 ```bash
-# 当前、上个、上上个节气
-python3 scripts/check_pin.py --markdown
-python3 scripts/check_pin.py --previous --markdown
-python3 scripts/check_pin.py --periods-ago 2 --markdown
+python3 scripts/check_pin.py --previous --markdown       # 上个节气
+python3 scripts/check_pin.py --periods-ago 2 --markdown  # 上上个节气
+python3 scripts/check_pin.py --json                     # JSON 结果
+```
 
-# 查询结果 JSON；不输出凭据、订单编号、地址或电话
-python3 scripts/check_pin.py --json
+## 样例小票
 
-# 虚构订单演示，不连接账户，也不需要 Token
+以下使用[虚构订单](examples/receipt-orders.json)，无需 Token 即可体验：
+
+```bash
 python3 scripts/check_pin.py --at 2026-10-10T12:00:00+08:00 --orders-file examples/receipt-orders.json --markdown
 ```
-
-另有 `examples/completed-orders.json`（有成功订单）和 `examples/no-successful-orders.json`（无成功订单）。`--at` 用于演示和调试，正常查询采用真实当前时间；切换历史节气使用 `--periods-ago N`，不用固定天数倒推。
-
-默认输出纯文本收据，`--markdown` 添加代码块，`--json` 输出结构化结果，后两者互斥。JSON 可通过标准输入交给独立收据脚本，无需保存订单文件：
-
-```bash
-python3 scripts/check_pin.py --json | python3 scripts/render_receipt.py --markdown
-```
-
-`render_receipt.py` 也支持 `--result-file 文件.json`。查询命令成功返回结论时退出码为 `0`；无法判断、配置无效或接口失败时为 `2`。独立渲染器退出码只表示收据是否生成成功，不表示徽章状态。
-
-<details>
-<summary>查看虚构订单的收据效果</summary>
 
 ```text
 .------------------------------------------------------.
@@ -127,52 +101,17 @@ python3 scripts/check_pin.py --json | python3 scripts/render_receipt.py --markdo
  /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 ```
 
-</details>
+## 判断说明
 
-## 判断规则与限制
+- 按北京时间的节气当天 0 点划分区间，包含开始、不含结束；这是项目规则，并非官方确认的发放时间。
+- 本期有「已完成」或「已评价」订单，即推定获得徽章；查询失败或证据不足时返回「无法判断」。
+- 小票展示最近最多 5 单，统计使用本次返回的全部本期订单，仅合计成功订单的已知实付金额。
+- 接口只返回近期订单，未查到不代表未获得，查询较早节气时尤其如此。
 
-1. 按北京时间加载本地节气区间：**开始包含，结束不包含**，全部边界为 0 点。例如寒露为 `2026-10-08 00:00 ≤ 下单时间 < 2026-10-23 00:00`。
-2. 官方 MCP 的 `order-list` 返回近期订单。按 **`createTime` 下单时间**筛选，忽略未来订单。
-3. `orderStatus` 为 `6`（已完成）或 `8`（已评价）算成功；真实接口的明确中文状态也会精确识别。待支付、处理中、已取消不算成功。未知状态必要时用 `query-order` 核实。
-4. 找到至少一笔明确成功订单即可推定获得。没有成功证据且有无法确认的时间或状态，则返回无法判断；网络、认证或响应异常也不会被当作无订单。
+脚本不保存订单历史，不输出 Token、订单编号、电话或地址；分享小票前请检查门店、餐品和金额等消费信息。
 
-收据只展示最近 **5 单**，但统计、合计和判断使用**本次返回的全部本期订单**。取消和处理中订单可以展示，不计入成功消费合计；缺失金额显示 `--`，仅汇总已知金额，不补成零元。
-
-`order-list` 没有公开日期筛选、分页参数或完整历史覆盖范围。**「未查询到」仅针对这次返回的数据，不能证明官方没有发放徽章**，回查较早节气时尤其需要注意。
-
-脚本不写入订单历史，也不输出 Token、订单编号、电话或地址。小票中的门店、餐品及金额仍属于个人消费信息，分享前请自行检查。仓库中的订单示例均为虚构数据。
-
-## 日期维护与验证
-
-日期在 [references/badge-periods.json](references/badge-periods.json) 中，查询时不联网获取节气或活动日历。2026、2027 年逐项按香港天文台年历核对；年初覆盖用 2025 年冬至，年末结束用 2028 年小寒。来源、核验日期和适用范围记录在 JSON 的 `sources`、`verified_at` 中。
-
-节气顺序固定，公历日期随年份变化。增加年份时更新 `years`，按顺序追加 24 个区间，保留前一年冬至并补齐次年小寒结束边界。所有区间必须连续、无重叠、北京时间 0 点；已核验用 `verified`，暂编数据用 `placeholder`。未维护的年份会返回无法判断。
+节气日期见 [badge-periods.json](references/badge-periods.json)，接口说明见 [MCP_INTEGRATION.md](MCP_INTEGRATION.md)。运行测试：
 
 ```bash
 python3 -m unittest discover -s tests -v
-```
-
-测试覆盖节气切换、跨年回溯、状态核实、异常响应、隐私字段过滤、金额计算和五单展示上限。真实 MCP 验证及接口流程见 [MCP_INTEGRATION.md](MCP_INTEGRATION.md)。
-
-## 挑战赛材料
-
-本项目面向[麦当劳程序员创意开发大赛](https://github.com/M-China/mcd-developer-innovation-challenge)。以下为 2026-10-10 核对的要求，更新以[官方活动规则](https://github.com/M-China/mcd-developer-innovation-challenge/blob/main/activityGuidelines.md)为准。
-
-| 材料 | 本项目对应文件 |
-| --- | --- |
-| 项目介绍、安装方法、示例、目标用户 | `README.md` |
-| 官方参赛声明，文件名和内容不可修改 | `CONTEST_DECLARATION.md`，保留官方原文 |
-| 实际 MCP 工具、流程及业务价值 | `MCP_INTEGRATION.md` |
-| 可运行 Skill 和源代码 | `SKILL.md`、`scripts/`、`references/` |
-| 不含凭据的连接器示例 | `mcp-config.example.json`，作为补充材料 |
-
-`workbuddy.md` 仅申请 WorkBuddy 专项奖励时需要，应导出真实开发对话；本项目没有附加该材料或声明使用过 WorkBuddy。
-
-报名还需公开可访问的 GitHub 仓库，并在北京时间 **2026-10-25 23:59** 前到活动仓库发布符合模板的 Issue，正文不超过 1000 字且不含图片。项目创建时间、参加者资格及排名条件见官方规则。可使用下方报名文案；本地材料整理不等于已报名成功。
-
-```text
-【参赛申请】
-项目名称：麦麦节气徽章查询
-项目地址：https://github.com/Mim0sa/mcd-pin-reminder
-项目简介：面向麦当劳节气徽章收藏用户，通过官方 MCP 查询当前或历史节气内的成功订单，按订单推定徽章状态，并生成 ASCII 消费收据，展示最近最多五单。内置 2026、2027 年节气日期，支持真实账户查询和无需凭据的虚构订单演示。
 ```
