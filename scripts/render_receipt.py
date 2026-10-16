@@ -85,6 +85,10 @@ def render_receipt(result):
     line("开始  " + start.strftime("%Y-%m-%d %H:%M") + "  (含)")
     line("结束  " + end.strftime("%Y-%m-%d %H:%M") + "  (不含)")
     line("查询  " + checked.strftime("%Y-%m-%d %H:%M") + "  北京时间")
+    if offset == 0 and result["outcome"] == "not_obtained" and start <= checked < end:
+        remaining_hours = (end - checked).days * 24 + (end - checked).seconds // 3600
+        days, hours = divmod(remaining_hours, 24)
+        line(f"距截止还有 {days} 天 {hours} 小时" if remaining_hours else "距截止不足 1 小时")
     if result.get("calendar_status") == "placeholder":
         line("节气日期为暂编演示数据，待替换。")
     rule()

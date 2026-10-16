@@ -56,6 +56,30 @@ class ReceiptTest(unittest.TestCase):
         self.assertIn("PIN NOT YET", receipt)
         self.assertIn("本次未查到本节气内的订单", receipt)
 
+    def test_current_missing_badge_shows_time_until_deadline(self):
+        for checked_at, expected in (
+            ("2026-10-08T00:00:00+08:00", "距截止还有 15 天 0 小时"),
+            ("2026-10-16T11:41:00+08:00", "距截止还有 6 天 12 小时"),
+            ("2026-10-22T23:00:00+08:00", "距截止还有 0 天 1 小时"),
+            ("2026-10-22T23:59:59+08:00", "距截止不足 1 小时"),
+            ("2026-10-23T00:00:00+08:00", "距截止还有 15 天 0 小时"),
+        ):
+            with self.subTest(checked_at=checked_at):
+                result = check(parse_time(checked_at), CALENDAR, orders=[])
+                self.assertIn(expected, render_receipt(result))
+
+    def test_historical_period_does_not_show_deadline_countdown(self):
+        for offset in (1, 2):
+            with self.subTest(offset=offset):
+                result = check(NOW, CALENDAR, orders=[], periods_ago=offset)
+                self.assertNotIn("距截止", render_receipt(result))
+
+    def test_obtained_or_unknown_badge_does_not_show_deadline_countdown(self):
+        for status in ("6", "999"):
+            with self.subTest(status=status):
+                result = self.result([{"createTime": "2026-10-09", "orderStatus": status}])
+                self.assertNotIn("距截止", render_receipt(result))
+
     def test_unknown_status_never_receives_badge_stamp(self):
         receipt = render_receipt(self.result([{"createTime": "2026-10-09", "orderStatus": "999"}]))
         self.assertIn("PIN UNKNOWN", receipt)
